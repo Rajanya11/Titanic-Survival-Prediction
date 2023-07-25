@@ -1,0 +1,96 @@
+# TITANIC SURVIVAL PREDICTION
+
+import pandas as pd
+from sklearn.model_selection import train_test_split,cross_val_score
+from sklearn.preprocessing import LabelEncoder
+import xgboost as xgb
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import seaborn as sns
+
+df = pd.read_csv(r'C:\Users\Hp\Downloads\titanic.csv')
+df.head(5)
+
+df=df.drop(columns='Cabin',axis=1)
+
+df['Age'].fillna(df['Age'].mean(),inplace=True)
+
+df['Fare'].fillna(df['Fare'].mean(),inplace=True)
+
+df.isnull().sum()
+
+df.describe()
+
+df['Survived'].value_counts()
+
+sns.countplot(data=df,x='Survived')
+
+df['Sex'].value_counts()
+
+sns.countplot(x='Sex',data=df)
+
+sns.countplot(x='Sex',hue='Survived',data=df)
+
+sns.countplot(x='Pclass',data=df)
+
+sns.countplot(x='Pclass',hue='Survived',data=df)
+
+sns.countplot(x='SibSp',hue='Survived',data=df)
+
+df['Sex'].value_counts()
+
+df['Embarked'].value_counts()
+
+df.replace({'Sex':{'male':0,'female':1},'Embarked':{'S':0,'C':1,'Q':2}},inplace=True)
+
+df.head()
+
+X = df.drop('Survived', axis=1)
+y = df['Survived']
+
+X = pd.get_dummies(X)
+
+from sklearn.preprocessing import LabelEncoder
+label_encoder = LabelEncoder()
+y = label_encoder.fit_transform(y)
+
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier
+from sklearn.svm import SVC
+import xgboost as xgb
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+def test_multiple_models(X,y,cv):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    scaler=StandardScaler()
+    X_train=scaler.fit_transform(X_train)
+    X_test=scaler.transform(X_test)
+
+models=[("Logistic Regression",LogisticRegression()),("Decision Tree",DecisionTreeClassifier()),("Random Forest",RandomForestClassifier()),("Support Vector Machine",SVC()),("xgb",xgb.XGBClassifier(random_state=42)),("AdaBoost",AdaBoostClassifier(n_estimators=100,random_state=42))]
+
+from sklearn.model_selection import cross_val_score, KFold
+num_folds = 5
+cv = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+for name, model in models:
+    scores = cross_val_score(model, X_train, y_train, cv=cv)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    logreg = LogisticRegression(solver='lbfgs', max_iter=1000)
+
+accuracy=accuracy_score(y_test,y_pred)
+print(f"Model: {name}")
+print("Cross-Validation Accuracy:",scores.mean())
+print("Accuracy:",accuracy)
+report= classification_report(y_test,y_pred)
+print("Classification Report:\n",report)
+print("..."*40)
+test_multiple_models(X,y,5)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+report = classification_report(y_test, y_pred)
+print("Classification Report:")
+print(report)
